@@ -1,26 +1,77 @@
-# Système, Scripts et Sécurité
+# 🛡️ Système, Scripts et Sécurité
 
 Projet complet d'administration système et de sécurisation de scripts bash avec exploitation d'API, surveillance système et automatisation des tâches.
 
+## 🚀 Démarrage rapide
+
+### Structure du projet
+```
+scripts/
+├── api/                    # Scripts d'exploitation d'API
+│   ├── install.sh         # Configuration initiale API OpenWeather
+│   ├── openweather_api.sh # Client API sécurisé
+│   └── logs/              # Journalisation des requêtes
+├── backup/                 # Scripts de sauvegarde
+│   └── backup_plateforme.sh
+├── monitoring/             # Surveillance système
+│   ├── capture_stats.sh   # Capture de métriques
+│   └── stats.csv          # Données de performance
+└── system/                 # Administration système
+    ├── install_deps.sh    # Installation serveur web
+    └── update_system.sh   # Mise à jour automatisée
+```
+
+### Utilisation des scripts
+
+#### 🌤️ API Météo
+```bash
+# Configuration initiale
+cd scripts/api
+./install.sh
+
+# Obtenir la météo
+./openweather_api.sh current
+./openweather_api.sh current "New York"
+```
+
+#### 💾 Sauvegarde automatique
+```bash
+# Exécution manuelle
+./scripts/backup/backup_plateforme.sh
+
+# Programmation via cron (quotidien à 2h)
+crontab -e
+# Ajouter: 0 2 * * * /chemin/vers/scripts/backup/backup_plateforme.sh
+```
+
+#### 📊 Surveillance système
+```bash
+# Capture des métriques
+./scripts/monitoring/capture_stats.sh
+
+# Consultation des données
+cat scripts/monitoring/stats.csv
+```
+
 ## 📋 Sommaire du projet
 
-1. [Création d'une VM Debian](#1-création-dune-vm-debian)
+1. [Configuration environnement](#1-configuration-environnement)
 2. [Commandes de recherche avancée](#2-commandes-de-recherche-avancée)
-3. [Compression et décompression](#3-compression-et-décompression)
+3. [Compression et archivage](#3-compression-et-archivage)
 4. [Manipulation de texte](#4-manipulation-de-texte)
 5. [Gestion des processus](#5-gestion-des-processus)
 6. [Surveillance des ressources](#6-surveillance-des-ressources)
-7. [Scripting avancé](#7-scripting-avancé)
-8. [Automatisation des mises à jour](#8-automatisation-des-mises-à-jour)
+7. [Scripts de sauvegarde](#7-scripts-de-sauvegarde)
+8. [Automatisation système](#8-automatisation-système)
 9. [Gestion des dépendances](#9-gestion-des-dépendances)
 10. [Sécurisation des scripts](#10-sécurisation-des-scripts)
-11. [Utilisation d'API Web](#11-utilisation-dapi-web)
+11. [API Web sécurisée](#11-api-web-sécurisée)
 
 ---
 
-## 1. Création d'une VM Debian
+## 1. Configuration environnement
 
-### Configuration initiale
+### VM Debian - Configuration initiale
 - **VM Debian** avec interface graphique
 - **Nom de session :** La_Plateforme
 - **Mot de passe :** LAPlateforme_
@@ -59,7 +110,7 @@ find ~/ -name "mon_texte.txt" -exec grep -l "force" {} \;
 
 ---
 
-## 3. Compression et décompression
+## 3. Compression et archivage
 
 ### Création du répertoire "Plateforme"
 ```bash
@@ -217,55 +268,40 @@ ss -tuln
 
 ---
 
-## 7. Scripting avancé
+## 7. Scripts de sauvegarde
 
-### Script de sauvegarde automatique
+### Script automatisé avec logging
+**Fichier :** `scripts/backup/backup_plateforme.sh`
+
+Le script de sauvegarde inclut :
+- ✅ Horodatage automatique des archives
+- ✅ Journalisation complète des opérations
+- ✅ Création automatique des répertoires
+- ✅ Gestion des erreurs
+
 ```bash
-#!/usr/bin/env bash
-# backup_plateforme.sh
-
-set -euo pipefail
-
-# Configuration
-SRC="/home/La_Plateforme/Documents/Plateforme"
-DEST_BASE="/home/La_Plateforme/Backups/Plateforme"
-LOG_FILE="${DEST_BASE}/backup_history.log"
-
-# Création du répertoire de destination
-mkdir -p "${DEST_BASE}"
-
-# Génération du timestamp
-TIMESTAMP=$(date +'%Y%m%d_%H%M%S')
-ARCHIVE="${DEST_BASE}/Plateforme_${TIMESTAMP}.tar.gz"
-
-# Logging du début
-echo "[$(date +'%Y-%m-%d %H:%M:%S')] Début sauvegarde : ${SRC} -> ${ARCHIVE}" | tee -a "${LOG_FILE}"
-
-# Création de l'archive
-tar -czf "${ARCHIVE}" -C "$(dirname "${SRC}")" "$(basename "${SRC}")"
-EXIT_CODE=$?
-
-# Logging du résultat
-if [ ${EXIT_CODE} -eq 0 ]; then
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Sauvegarde réussie : ${ARCHIVE}" | tee -a "${LOG_FILE}"
-else
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] Échec sauvegarde (code ${EXIT_CODE})" | tee -a "${LOG_FILE}" >&2
-    exit ${EXIT_CODE}
-fi
+# Exécution du script de sauvegarde
+./scripts/backup/backup_plateforme.sh
 ```
 
-### Automatisation avec cron
+**Fonctionnalités :**
+- Compression automatique en `.tar.gz`
+- Historique dans `backup_history.log`
+- Horodatage format `YYYYMMDD_HHMMSS`
+
+### Programmation automatique
 ```bash
 # Ajouter à crontab pour exécution quotidienne à 2h
 crontab -e
-# Ajouter : 0 2 * * * /home/La_Plateforme/backup_plateforme.sh
+# Ajouter : 0 2 * * * /chemin/vers/scripts/backup/backup_plateforme.sh
 ```
 
 ---
 
-## 8. Automatisation des mises à jour
+## 8. Automatisation système
 
 ### Script de mise à jour interactive
+**Fichier :** `scripts/system/update_system.sh`
 ```bash
 #!/usr/bin/env bash
 # update_system.sh
@@ -307,6 +343,7 @@ fi
 ## 9. Gestion des dépendances
 
 ### Script d'installation serveur web complet
+**Fichier :** `scripts/system/install_deps.sh`
 ```bash
 #!/usr/bin/env bash
 # install_webserver.sh
@@ -420,187 +457,115 @@ log_safe() {
 
 ---
 
-## 11. Utilisation d'API Web
+## 11. API Web sécurisée
 
-### Script OpenWeather sécurisé
+### 🌤️ API OpenWeather - Configuration et utilisation
 
-#### Configuration et installation
+#### Installation et configuration
+**Fichiers :** `scripts/api/install.sh` et `scripts/api/openweather_api.sh`
+
 ```bash
-# install.sh
-#!/usr/bin/env bash
-set -euo pipefail
+# Configuration initiale (création du fichier .env)
+cd scripts/api
+./install.sh
 
-echo "🌤️ Configuration de l'API OpenWeather"
-
-# Création du fichier .env s'il n'existe pas
-if [[ ! -f .env ]]; then
-    read -p "Entrez votre clé API OpenWeather : " -s api_key
-    echo
-    
-    cat > .env << EOF
-API_KEY=${api_key}
-DEFAULT_CITY=Paris
-DEFAULT_UNITS=metric
-EOF
-    
-    echo "✅ Configuration sauvegardée dans .env"
-else
-    echo "ℹ️ Fichier .env existant trouvé"
-fi
-
-# Création du répertoire de logs
-mkdir -p logs
-echo "📁 Répertoire de logs créé"
-```
-
-#### Script principal API
-```bash
-#!/usr/bin/env bash
-# openweather_api.sh
-
-set -euo pipefail
-
-# Configuration
-CONFIG_FILE=".env"
-LOG_DIR="logs"
-
-# Chargement de la configuration
-if [[ -f "$CONFIG_FILE" ]]; then
-    source "$CONFIG_FILE"
-else
-    echo "❌ Fichier .env manquant. Exécutez ./install.sh" >&2
-    exit 1
-fi
-
-# Validation de la clé API
-if [[ -z "${API_KEY:-}" ]]; then
-    echo "❌ Clé API manquante dans .env" >&2
-    exit 1
-fi
-
-# Fonction de logging sécurisé
-log_request() {
-    local url="$1"
-    local safe_url=$(echo "$url" | sed "s/appid=[^&]*/appid=***HIDDEN***/g")
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] [REQUEST] $safe_url" >> "$LOG_DIR/api_requests.log"
-}
-
-log_response() {
-    local status="$1"
-    local data="$2"
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] [RESPONSE] HTTP: $status - Data: $data" >> "$LOG_DIR/api_responses.log"
-}
-
-log_error() {
-    local error="$1"
-    echo "[$(date +'%Y-%m-%d %H:%M:%S')] [ERROR] $error" >> "$LOG_DIR/errors.log"
-}
-
-# Fonction principale
-get_weather() {
-    local city="${1:-$DEFAULT_CITY}"
-    local units="${2:-$DEFAULT_UNITS}"
-    
-    # Validation de l'entrée
-    if [[ ! "$city" =~ ^[a-zA-Z\ \-,]+$ ]]; then
-        log_error "Nom de ville invalide: $city"
-        echo "❌ Nom de ville invalide" >&2
-        return 1
-    fi
-    
-    # Construction de l'URL
-    local url="https://api.openweathermap.org/data/2.5/weather?q=${city}&units=${units}&lang=fr&appid=${API_KEY}"
-    
-    # Logging de la requête
-    log_request "$url"
-    
-    # Appel API avec gestion d'erreurs
-    local response
-    local http_code
-    
-    response=$(curl -s -w "\n%{http_code}" --max-time 10 "$url" 2>/dev/null)
-    http_code=$(echo "$response" | tail -n1)
-    local json_data=$(echo "$response" | head -n -1)
-    
-    # Validation de la réponse HTTP
-    case "$http_code" in
-        200)
-            # Validation JSON
-            if ! echo "$json_data" | jq . >/dev/null 2>&1; then
-                log_error "Réponse JSON invalide"
-                echo "❌ Erreur de format de données" >&2
-                return 1
-            fi
-            
-            log_response "$http_code" "$json_data"
-            
-            # Extraction et affichage des données
-            local temp=$(echo "$json_data" | jq -r '.main.temp')
-            local description=$(echo "$json_data" | jq -r '.weather[0].description')
-            local humidity=$(echo "$json_data" | jq -r '.main.humidity')
-            
-            echo "🌤️ Météo pour $city"
-            echo "🌡️ Température: ${temp}°C"
-            echo "☁️ Conditions: $description"
-            echo "💧 Humidité: ${humidity}%"
-            ;;
-        401)
-            log_error "Clé API invalide (HTTP 401)"
-            echo "❌ Clé API invalide" >&2
-            return 1
-            ;;
-        404)
-            log_error "Ville non trouvée: $city (HTTP 404)"
-            echo "❌ Ville '$city' non trouvée" >&2
-            return 1
-            ;;
-        *)
-            log_error "Erreur API (HTTP $http_code)"
-            echo "❌ Erreur API (Code: $http_code)" >&2
-            return 1
-            ;;
-    esac
-}
-
-# Interface utilisateur
-case "${1:-current}" in
-    "current")
-        get_weather "${2:-}" "${3:-}"
-        ;;
-    "config")
-        echo "📋 Configuration actuelle:"
-        echo "Ville par défaut: ${DEFAULT_CITY}"
-        echo "Unités: ${DEFAULT_UNITS}"
-        echo "Logs: $LOG_DIR/"
-        ;;
-    "help")
-        echo "Usage: $0 [current|config|help] [ville] [unités]"
-        echo "Exemples:"
-        echo "  $0 current"
-        echo "  $0 current 'New York'"
-        echo "  $0 current 'Tokyo' imperial"
-        ;;
-    *)
-        echo "❌ Commande inconnue. Utilisez '$0 help'" >&2
-        exit 1
-        ;;
-esac
+# Utilisation du client API
+./openweather_api.sh current              # Ville par défaut
+./openweather_api.sh current "Paris"      # Ville spécifique
+./openweather_api.sh current "Tokyo" imperial  # Avec unités
+./openweather_api.sh config               # Afficher la configuration
+./openweather_api.sh help                 # Aide
 ```
 
 ### Fonctionnalités de sécurité implémentées
 
 - ✅ **Clé API sécurisée** : Stockage dans `.env`, masquage dans les logs
-- ✅ **Validation stricte** : Vérification des entrées utilisateur
+- ✅ **Mode strict bash** : `set -euo pipefail`
+- ✅ **Validation des entrées** : Regex pour noms de villes
 - ✅ **Gestion d'erreurs HTTP** : Codes 200, 401, 404, etc.
-- ✅ **Logging complet** : Requêtes, réponses et erreurs séparées
-- ✅ **Timeouts** : Protection contre les blocages
-- ✅ **Validation JSON** : Vérification de l'intégrité des données
+- ✅ **Logging sécurisé** : Séparation requêtes/réponses/erreurs
+- ✅ **Timeouts** : Protection contre les blocages réseau
+- ✅ **Validation JSON** : Vérification intégrité des données
 
 ### Structure des logs
-
 ```
-logs/
+scripts/api/logs/
 ├── api_requests.log    # Requêtes avec URLs (clés masquées)
 ├── api_responses.log   # Réponses HTTP et données JSON
 └── errors.log          # Erreurs et avertissements
 ```
+
+### Script de surveillance système
+**Fichier :** `scripts/monitoring/capture_stats.sh`
+
+Capture automatique de métriques système :
+- 📊 Utilisation CPU (user, system, idle)
+- 💾 Mémoire (libre, utilisée)
+- 💽 E/S disque (lecture, écriture)
+- 🌐 Trafic réseau (entrant, sortant)
+
+```bash
+# Lancement de la surveillance
+./scripts/monitoring/capture_stats.sh
+
+# Consultation des données
+cat scripts/monitoring/stats.csv
+```
+
+---
+
+## 🔧 Outils et dépendances
+
+### Requis système
+- **OS :** Debian/Ubuntu Linux
+- **Bash :** Version 4.0+
+- **Utilitaires :** curl, jq, tar, gzip
+
+### Installation des dépendances
+```bash
+# Installation automatique
+sudo ./scripts/system/install_deps.sh
+
+# Installation manuelle
+sudo apt update
+sudo apt install -y curl jq apache2 mariadb-server nodejs git
+```
+
+---
+
+## 📝 Notes de sécurité
+
+### Bonnes pratiques appliquées
+
+| Composant | Mesure de sécurité | Implémentation |
+|-----------|-------------------|-----------------|
+| **Scripts bash** | Mode strict | `set -euo pipefail` |
+| **Variables** | Validation | Regex et sanitisation |
+| **API** | Secrets | Fichier `.env` séparé |
+| **Logs** | Masquage | Remplacement clés sensibles |
+| **Réseau** | Timeouts | `curl --max-time 10` |
+| **JSON** | Validation | `jq` pour parsing sécurisé |
+
+### Fichiers sensibles à protéger
+```bash
+# Ajout au .gitignore
+scripts/api/.env
+scripts/api/logs/*.log
+scripts/monitoring/stats.csv
+```
+
+---
+
+## 🚀 Contribution
+
+1. Fork du projet
+2. Création d'une branche (`git checkout -b feature/nouvelle-fonctionnalite`)
+3. Commit des changements (`git commit -am 'Ajout nouvelle fonctionnalité'`)
+4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
+5. Création d'une Pull Request
+
+---
+
+## 📄 Licence
+
+Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
