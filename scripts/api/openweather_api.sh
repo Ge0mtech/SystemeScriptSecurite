@@ -205,19 +205,25 @@ make_api_request() {
     local safe_url=$(echo "$url" | sed "s/appid=[^&]*/appid=***HIDDEN***/")
     log_message "REQUEST" "$description - URL: $safe_url" "$REQUEST_LOG"
     
-    info "Requête: $description"
+    info "Requête: $description" >&2
     
     # Exécution de la requête avec gestion d'erreur
-    local response
+    local temp_file=$(mktemp)
     local http_code
     
-    if ! response=$(curl -s -w "%{http_code}" --max-time 30 --retry 3 --retry-delay 2 "$url" 2>/dev/null); then
+    if ! http_code=$(curl -s -w "%{http_code}" --max-time 30 --retry 3 --retry-delay 2 -o "$temp_file" "$url" 2>/dev/null); then
+        rm -f "$temp_file"
         error_exit "Échec de la connexion à l'API OpenWeather"
     fi
     
-    # Extraction du code HTTP et du contenu
-    http_code="${response: -3}"
-    response="${response%???}"
+    # Lecture du contenu de la réponse
+    local response
+    if [[ -f "$temp_file" ]]; then
+        response=$(cat "$temp_file")
+        rm -f "$temp_file"
+    else
+        error_exit "Impossible de lire la réponse de l'API"
+    fi
     
     # Log de la réponse
     log_message "RESPONSE" "$description - HTTP: $http_code - Data: $response" "$RESPONSE_LOG"
@@ -225,7 +231,7 @@ make_api_request() {
     # Gestion des codes d'erreur HTTP
     case "$http_code" in
         200)
-            success "Requête réussie (HTTP 200)"
+            success "Requête réussie (HTTP 200)" >&2
             ;;
         401)
             error_exit "Clé API invalide ou manquante (HTTP 401)"
@@ -266,7 +272,7 @@ get_current_weather() {
     response=$(make_api_request "/weather" "$params" "Météo actuelle pour $city")
     
     # Parsing et affichage des données
-    parse_current_weather "$response"
+    parse_current_weather "$response" "$units"
 }
 
 # Obtenir les prévisions météo
@@ -288,7 +294,7 @@ get_forecast() {
     response=$(make_api_request "/forecast" "$params" "Prévisions pour $city ($days jours)")
     
     # Parsing et affichage des données
-    parse_forecast "$response" "$days"
+    parse_forecast "$response" "$days" "$units"
 }
 
 # =============================================================================
@@ -298,6 +304,15 @@ get_forecast() {
 # Parser les données météo actuelles
 parse_current_weather() {
     local json="$1"
+    local units="${2:-metric}"
+    
+    # Déterminer l'unité de température
+    local temp_unit
+    case "$units" in
+        "imperial") temp_unit="°F" ;;
+        "kelvin") temp_unit="K" ;;
+        *) temp_unit="°C" ;;
+    esac
     
     echo
     echo "============================================="
@@ -317,8 +332,8 @@ parse_current_weather() {
     visibility=$(echo "$json" | jq -r '.visibility // "N/A"')
     
     printf "%-20s: %s\n" "Ville" "$city"
-    printf "%-20s: %s°C\n" "Température" "$temp"
-    printf "%-20s: %s°C\n" "Ressenti" "$feels_like"
+    printf "%-20s: %s%s\n" "Température" "$temp" "$temp_unit"
+    printf "%-20s: %s%s\n" "Ressenti" "$feels_like" "$temp_unit"
     printf "%-20s: %s\n" "Description" "$description"
     printf "%-20s: %s%%\n" "Humidité" "$humidity"
     printf "%-20s: %s hPa\n" "Pression" "$pressure"
@@ -333,6 +348,15 @@ parse_current_weather() {
 parse_forecast() {
     local json="$1"
     local days="$2"
+    local units="${3:-metric}"
+    
+    # Déterminer l'unité de température
+    local temp_unit
+    case "$units" in
+        "imperial") temp_unit="°F" ;;
+        "kelvin") temp_unit="K" ;;
+        *) temp_unit="°C" ;;
+    esac
     
     echo
     echo "============================================="
@@ -355,9 +379,9 @@ parse_forecast() {
         description=$(echo "$json" | jq -r ".list[$i].weather[0].description // \"N/A\"")
         
         if [[ "$date" != "N/A" ]]; then
-            printf "%s | %s°C - %s°C | %s\n" \
+            printf "%s | %s%s - %s%s | %s\n" \
                 "$(date -d "$date" '+%d/%m %H:%M' 2>/dev/null || echo "$date")" \
-                "$temp_min" "$temp_max" "$description"
+                "$temp_min" "$temp_unit" "$temp_max" "$temp_unit" "$description"
         fi
         
         ((i += 8)) # Saut de 24h (8 créneaux de 3h)
