@@ -528,44 +528,6 @@ scripts/api/logs/
 └── errors.log          # Erreurs et avertissements
 ```
 
-### Script de surveillance système
-**Fichier :** `scripts/monitoring/capture_stats.sh`
-
-Capture automatique de métriques système :
-- 📊 Utilisation CPU (user, system, idle)
-- 💾 Mémoire (libre, utilisée)
-- 💽 E/S disque (lecture, écriture)
-- 🌐 Trafic réseau (entrant, sortant)
-
-```bash
-# Lancement de la surveillance
-./scripts/monitoring/capture_stats.sh
-
-# Consultation des données
-cat scripts/monitoring/stats.csv
-```
-
----
-
-## 🔧 Outils et dépendances
-
-### Requis système
-- **OS :** Debian/Ubuntu Linux
-- **Bash :** Version 4.0+
-- **Utilitaires :** curl, jq, tar, gzip
-
-### Installation des dépendances
-```bash
-# Installation automatique
-sudo ./scripts/system/install_deps.sh
-
-# Installation manuelle
-sudo apt update
-sudo apt install -y curl jq apache2 mariadb-server nodejs git
-```
-
----
-
 ### Fichiers sensibles à protéger
 ```bash
 # Ajout au .gitignore
