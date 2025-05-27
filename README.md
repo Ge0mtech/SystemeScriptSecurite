@@ -169,14 +169,69 @@ pkill -9 nom_processus
 ### Script de surveillance temps réel
 ```bash
 #!/bin/bash
-# monitor_system.sh
 
-# En-tête CSV
-echo "Timestamp,CPU User,CPU System,CPU Idle,Memory Free,Memory Used,Disk Read,Disk Write,Network In,Network Out" > stats.csv
+# Couleurs pour l'affichage
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
 
-# Capture des données (5 iterations)
+# Fonction pour afficher un en-tête coloré
+print_header() {
+    echo -e "${BLUE}========================================${NC}"
+    echo -e "${BLUE}    COLLECTE DES STATISTIQUES SYSTÈME    ${NC}"
+    echo -e "${BLUE}========================================${NC}"
+}
+
+# Fonction pour afficher les statistiques en temps réel
+print_stats() {
+    local timestamp="$1"
+    local cpu_user="$2"
+    local cpu_system="$3"
+    local cpu_idle="$4"
+    local memory_free="$5"
+    local memory_used="$6"
+    local disk_read="$7"
+    local disk_write="$8"
+    local network_in="$9"
+    local network_out="${10}"
+    
+    echo -e "\n${GREEN}📊 Mesure à: ${timestamp}${NC}"
+    echo -e "${YELLOW}CPU:${NC}"
+    echo -e "  User: ${cpu_user}% | System: ${cpu_system}% | Idle: ${cpu_idle}%"
+    echo -e "${YELLOW}Mémoire (KB):${NC}"
+    echo -e "  Libre: ${memory_free} | Utilisée: ${memory_used}"
+    echo -e "${YELLOW}Disque (KB/s):${NC}"
+    echo -e "  Lecture: ${disk_read} | Écriture: ${disk_write}"
+    echo -e "${YELLOW}Réseau (packets):${NC}"
+    echo -e "  Entrée: ${network_in} | Sortie: ${network_out}"
+    echo -e "${BLUE}----------------------------------------${NC}"
+}
+
+# Créer le répertoire de sortie s'il n'existe pas
+mkdir -p logs
+
+# Nom du fichier avec timestamp
+csv_file="logs/stats_$(date +%Y%m%d_%H%M%S).csv"
+
+# En-tête du fichier CSV avec descriptions
+cat > "$csv_file" << EOF
+# Statistiques système collectées le $(date)
+# Format: Timestamp,CPU_User_%,CPU_System_%,CPU_Idle_%,Memory_Free_KB,Memory_Used_KB,Disk_Read_KB/s,Disk_Write_KB/s,Network_In_packets,Network_Out_packets
+Timestamp,CPU User (%),CPU System (%),CPU Idle (%),Memory Free (KB),Memory Used (KB),Disk Read (KB/s),Disk Write (KB/s),Network In (packets),Network Out (packets)
+EOF
+
+# Afficher l'en-tête
+print_header
+echo -e "${GREEN}📁 Fichier de sortie: ${csv_file}${NC}"
+echo -e "${GREEN}🔄 Collecte de 5 échantillons...${NC}\n"
+
+# Boucle pour capturer les données
 for i in {1..5}; do
-    # Statistiques système
+    echo -e "${BLUE}Collecte ${i}/5...${NC}"
+    
+    # Obtenir les statistiques CPU et mémoire
     vmstat_output=$(vmstat 1 1)
     cpu_user=$(echo "$vmstat_output" | awk 'NR==3 {print $13}')
     cpu_system=$(echo "$vmstat_output" | awk 'NR==3 {print $14}')
@@ -184,21 +239,50 @@ for i in {1..5}; do
     memory_free=$(echo "$vmstat_output" | awk 'NR==3 {print $4}')
     memory_used=$(echo "$vmstat_output" | awk 'NR==3 {print $3}')
 
-    # Statistiques disque
-    iostat_output=$(iostat -d 1 1)
-    disk_read=$(echo "$iostat_output" | awk 'NR==4 {print $3}')
-    disk_write=$(echo "$iostat_output" | awk 'NR==4 {print $4}')
+    # Obtenir les statistiques de disque (avec gestion d'erreur)
+    if command -v iostat >/dev/null 2>&1; then
+        iostat_output=$(iostat -d 1 1 2>/dev/null)
+        disk_read=$(echo "$iostat_output" | awk 'NR==4 {print $3}' 2>/dev/null || echo "N/A")
+        disk_write=$(echo "$iostat_output" | awk 'NR==4 {print $4}' 2>/dev/null || echo "N/A")
+    else
+        disk_read="N/A"
+        disk_write="N/A"
+    fi
 
-    # Statistiques réseau
-    netstat_output=$(netstat -i)
-    network_in=$(echo "$netstat_output" | awk 'NR==4 {print $4}')
-    network_out=$(echo "$netstat_output" | awk 'NR==4 {print $8}')
+    # Obtenir les statistiques réseau
+    netstat_output=$(netstat -i 2>/dev/null)
+    network_in=$(echo "$netstat_output" | awk 'NR==4 {print $4}' 2>/dev/null || echo "N/A")
+    network_out=$(echo "$netstat_output" | awk 'NR==4 {print $8}' 2>/dev/null || echo "N/A")
 
-    # Écriture dans le CSV
-    echo "$(date),$cpu_user,$cpu_system,$cpu_idle,$memory_free,$memory_used,$disk_read,$disk_write,$network_in,$network_out" >> stats.csv
+    # Timestamp formaté
+    timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     
-    sleep 1
+    # Afficher les statistiques en temps réel
+    print_stats "$timestamp" "$cpu_user" "$cpu_system" "$cpu_idle" "$memory_free" "$memory_used" "$disk_read" "$disk_write" "$network_in" "$network_out"
+    
+    # Écrire dans le fichier CSV
+    echo "$timestamp,$cpu_user,$cpu_system,$cpu_idle,$memory_free,$memory_used,$disk_read,$disk_write,$network_in,$network_out" >> "$csv_file"
+
+    # Attendre avant la prochaine capture (sauf pour la dernière)
+    if [ $i -lt 5 ]; then
+        sleep 1
+    fi
 done
+
+echo -e "\n${GREEN}✅ Collecte terminée!${NC}"
+echo -e "${GREEN}📊 Résultats sauvegardés dans: ${csv_file}${NC}"
+
+# Affichage du résumé final
+echo -e "\n${YELLOW}📋 RÉSUMÉ:${NC}"
+echo -e "Nombre d'échantillons: 5"
+echo -e "Fichier CSV: ${csv_file}"
+echo -e "Taille du fichier: $(du -h "$csv_file" | cut -f1)"
+
+# Option pour visualiser le CSV
+echo -e "\n${BLUE}💡 Pour visualiser les données:${NC}"
+echo -e "   column -t -s, '$csv_file' | head -10"
+echo -e "   ou"
+echo -e "   cat '$csv_file'"
 ```
 
 ### Commandes de surveillance en temps réel
