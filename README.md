@@ -2,57 +2,6 @@
 
 Projet complet d'administration système et de sécurisation de scripts bash avec exploitation d'API, surveillance système et automatisation des tâches.
 
-## 🚀 Démarrage rapide
-
-### Structure du projet
-```
-scripts/
-├── api/                    # Scripts d'exploitation d'API
-│   ├── install.sh         # Configuration initiale API OpenWeather
-│   ├── openweather_api.sh # Client API sécurisé
-│   └── logs/              # Journalisation des requêtes
-├── backup/                 # Scripts de sauvegarde
-│   └── backup_plateforme.sh
-├── monitoring/             # Surveillance système
-│   ├── capture_stats.sh   # Capture de métriques
-│   └── stats.csv          # Données de performance
-└── system/                 # Administration système
-    ├── install_deps.sh    # Installation serveur web
-    └── update_system.sh   # Mise à jour automatisée
-```
-
-### Utilisation des scripts
-
-#### 🌤️ API Météo
-```bash
-# Configuration initiale
-cd scripts/api
-./install.sh
-
-# Obtenir la météo
-./openweather_api.sh current
-./openweather_api.sh current "New York"
-```
-
-#### 💾 Sauvegarde automatique
-```bash
-# Exécution manuelle
-./scripts/backup/backup_plateforme.sh
-
-# Programmation via cron (quotidien à 2h)
-crontab -e
-# Ajouter: 0 2 * * * /chemin/vers/scripts/backup/backup_plateforme.sh
-```
-
-#### 📊 Surveillance système
-```bash
-# Capture des métriques
-./scripts/monitoring/capture_stats.sh
-
-# Consultation des données
-cat scripts/monitoring/stats.csv
-```
-
 ## 📋 Sommaire du projet
 
 1. [Configuration environnement](#1-configuration-environnement)
@@ -533,19 +482,6 @@ sudo apt install -y curl jq apache2 mariadb-server nodejs git
 
 ---
 
-## 📝 Notes de sécurité
-
-### Bonnes pratiques appliquées
-
-| Composant | Mesure de sécurité | Implémentation |
-|-----------|-------------------|-----------------|
-| **Scripts bash** | Mode strict | `set -euo pipefail` |
-| **Variables** | Validation | Regex et sanitisation |
-| **API** | Secrets | Fichier `.env` séparé |
-| **Logs** | Masquage | Remplacement clés sensibles |
-| **Réseau** | Timeouts | `curl --max-time 10` |
-| **JSON** | Validation | `jq` pour parsing sécurisé |
-
 ### Fichiers sensibles à protéger
 ```bash
 # Ajout au .gitignore
@@ -553,9 +489,3 @@ scripts/api/.env
 scripts/api/logs/*.log
 scripts/monitoring/stats.csv
 ```
-
----
-
-## 📄 Licence
-
-Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
