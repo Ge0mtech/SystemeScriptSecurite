@@ -556,16 +556,6 @@ scripts/monitoring/stats.csv
 
 ---
 
-## 🚀 Contribution
-
-1. Fork du projet
-2. Création d'une branche (`git checkout -b feature/nouvelle-fonctionnalite`)
-3. Commit des changements (`git commit -am 'Ajout nouvelle fonctionnalité'`)
-4. Push vers la branche (`git push origin feature/nouvelle-fonctionnalite`)
-5. Création d'une Pull Request
-
----
-
 ## 📄 Licence
 
 Ce projet est sous licence MIT. Voir le fichier `LICENSE` pour plus de détails.
